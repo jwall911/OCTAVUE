@@ -1,0 +1,44 @@
+from datetime import date
+from urllib.request import urlopen as uReq
+from bs4 import BeautifulSoup
+
+url = 'http://ufcstats.com/statistics/events/upcoming'
+response = uReq(url)
+html_content = response.read()
+response.close()
+
+file_name = "C:/Users/Josh/Desktop/" + str(date.today()) + "-" + "UpcomingEvents-data.csv"
+file = open(file_name, 'w')
+headers = 'EventID,Name,Date,Location\n'
+file.write(headers)
+
+soup = BeautifulSoup(html_content, 'html.parser')
+# print(html_content)
+# extract all event rows
+upcoming_events = soup.find_all('tr',
+                                class_='b-statistics__table-row')
+
+for event in upcoming_events:
+    # extract event name
+    event_a_tag = event.find('a', class_='b-link b-link_style_black')
+    if event_a_tag:  # check if event tag exists
+        current_event = event_a_tag.get('href')  # get the line that has link and name attached to it
+        EventID = current_event.split('/')[-1]  # separates text by the / then extracts the end of the link to get the portion that is distinct hence [-1]
+        Name = event_a_tag.text.strip()  # get the name from all the html tags
+
+    # extract event date
+    Date_tag = event.find('span', class_='b-statistics__date')
+    if Date_tag:  # check if date tag exists
+        Date = Date_tag.text.strip().replace(',', '')
+
+    # extract event location
+    Location_tag = event.find('td', class_='b-statistics__table-col b-statistics__table-col_style_big-top-padding')
+    if Location_tag:  # check if location tag exists
+        Location = Location_tag.text.strip().replace(',', '')
+
+        print(EventID, Name, Date, Location, sep=", ")
+        file.write(EventID + ',' + Name + ',' + Date + ',' + Location + '\n')
+
+file.close()
+
+
